@@ -15,6 +15,7 @@ import (
 	"github.com/tombuildsstuff/giovanni/storage/2018-11-09/blob/blobs"
 	"github.com/tombuildsstuff/giovanni/storage/2018-11-09/blob/containers"
 	"github.com/tombuildsstuff/giovanni/storage/2018-11-09/file/directories"
+	"github.com/tombuildsstuff/giovanni/storage/2018-11-09/file/files"
 	"github.com/tombuildsstuff/giovanni/storage/2018-11-09/file/shares"
 	"github.com/tombuildsstuff/giovanni/storage/2018-11-09/queue/queues"
 	"github.com/tombuildsstuff/giovanni/storage/2018-11-09/table/entities"
@@ -113,6 +114,24 @@ func (client Client) ContainersClient(ctx context.Context, account accountDetail
 	containersClient := containers.NewWithEnvironment(client.environment)
 	containersClient.Client.Authorizer = storageAuth
 	return &containersClient, nil
+}
+
+func (client Client) FileShareFilesClient(ctx context.Context, account accountDetails) (*files.Client, error) {
+	// NOTE: Files do not support AzureAD Authentication
+
+	accountKey, err := account.AccountKey(ctx, client)
+	if err != nil {
+		return nil, fmt.Errorf("Error retrieving Account Key: %s", err)
+	}
+
+	storageAuth, err := autorest.NewSharedKeyAuthorizer(account.name, *accountKey, autorest.SharedKeyLite)
+	if err != nil {
+		return nil, fmt.Errorf("Error building Authorizer: %+v", err)
+	}
+
+	filesClient := files.NewWithEnvironment(client.environment)
+	filesClient.Client.Authorizer = storageAuth
+	return &filesClient, nil
 }
 
 func (client Client) FileShareDirectoriesClient(ctx context.Context, account accountDetails) (*directories.Client, error) {
